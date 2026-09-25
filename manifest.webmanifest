@@ -1,0 +1,11 @@
+{
+  "name": "BATsense",
+  "short_name": "BATsense",
+  "description": "Swing your phone like a cricket bat. Six, four, or bowled, the sensors decide.",
+  "start_url": ".",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#06130d",
+  "theme_color": "#06130d",
+  "icons": []
+}
