@@ -1177,9 +1177,11 @@ function buttonSwing(windowEnd) {
 const field = $("field");
 const fctx = field.getContext("2d");
 
+let pgeoCache = { w: 0, h: 0 };
 function resizeCanvases() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const r = field.parentElement.getBoundingClientRect();
+  pgeoCache = { w: r.width, h: r.height };
   field.width = Math.max(1, r.width * dpr);
   field.height = Math.max(1, r.height * dpr);
   fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -1200,8 +1202,11 @@ if (typeof ResizeObserver !== "undefined") {
    ============================================================ */
 const CAM = { ey: 2.3, ez: -5, f: 1.88, horizon: 0.42 };
 function pgeo() {
-  const r = field.parentElement.getBoundingClientRect();
-  return { w: r.width, h: r.height };
+  if (pgeoCache.w < 10 || pgeoCache.h < 10) {
+    const r = field.parentElement.getBoundingClientRect();
+    pgeoCache = { w: r.width, h: r.height };
+  }
+  return pgeoCache;
 }
 function proj(x, y, z, w, h) {
   const dz = Math.max(0.6, z - CAM.ez);
@@ -1258,8 +1263,8 @@ function drawPerspective(opts = {}) {
   g.addColorStop(1, "#1b2c55");
   fctx.fillStyle = g;
   fctx.fillRect(0, 0, w, hor + 2);
+  fctx.fillStyle = "rgba(230,240,255,.55)";
   for (const st of STARS) {
-    fctx.fillStyle = `rgba(230,240,255,${st.a * (0.7 + 0.3 * Math.sin(now / 900 + st.p))})`;
     fctx.fillRect(st.x * w, st.y * hor, 1.4, 1.4);
   }
   // moon with halo
@@ -1322,12 +1327,11 @@ function drawPerspective(opts = {}) {
   fctx.strokeStyle = "rgba(120,140,180,.3)";
   fctx.lineWidth = 1;
   fctx.beginPath(); fctx.moveTo(0, tier1Top); fctx.lineTo(w, tier1Top); fctx.stroke();
-  // crowd speckles, twinkling
-  for (let i = 0; i < 210; i++) {
+  // crowd speckles
+  fctx.fillStyle = "rgba(230,238,255,.22)";
+  for (let i = 0; i < 180; i++) {
     const xx = (((i * 97) % 700) / 700) * w;
     const yy = tier2Top + 3 + (((i * 57) % 100) / 100) * (hor - tier2Top - 4);
-    const tw = 0.09 + ((i * 31) % 12) / 55 + 0.05 * Math.sin(now / 420 + i);
-    fctx.fillStyle = `rgba(230,238,255,${Math.max(0.05, tw)})`;
     fctx.fillRect(xx, yy, 1.7, 1.7);
   }
   // floodlit haze hanging over the ground
@@ -2024,7 +2028,7 @@ function startTimingRing(tRelease, tBounce, tContact) {
   const taS = (tContact - tBounce) / 1000;
   const G = 9.81;
   let vy0 = d0 ? (0.5 * G * tbS * tbS - 2.2) / tbS : 0;
-  vy0 = Math.max(-4, Math.min(1, vy0));
+  vy0 = Math.max(-4.5, Math.min(-0.25, vy0));
   const yEnd = 2.2 + vy0 * tbS - 0.5 * G * tbS * tbS; // residual after clamping
   const mzP = d0 ? d0.length.pitchM : 6;
   const vyImp = Math.abs(vy0 - G * tbS);
@@ -2047,13 +2051,14 @@ function startTimingRing(tRelease, tBounce, tContact) {
       if (now < tBounce) {
         const t = Math.max(0, (now - tRelease) / 1000);
         const u = Math.min(1, t / tbS);
-        // late in-air swing bends into (or away from) the marker
+        // Easing curve: gives immediate punch out of the hand, eliminating floatiness in perspective
+        const uz = Math.pow(u, 0.82);
         const bendFull = isAirSwing ? devSign * devMag : 0;
         const aimX = mx - bendFull;
         ball = {
-          x: mx * 0.2 * (1 - u) + aimX * u + bendFull * u * u * u,
-          y: Math.max(0.03, 2.2 + vy0 * t - 0.5 * G * t * t - yEnd * u),
-          z: 19.6 - (19.6 - mz) * u,
+          x: mx * 0.2 * (1 - uz) + aimX * uz + bendFull * uz * uz * uz,
+          y: Math.max(0.03, 2.2 + vy0 * t - 0.5 * G * t * t - yEnd * uz),
+          z: 19.6 - (19.6 - mz) * uz,
         };
       } else {
         const t = Math.max(0, (now - tBounce) / 1000);
