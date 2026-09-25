@@ -32,7 +32,7 @@ const FIELDERS = [
 // window = timing tolerance in seconds. Outside it you MISS, full stop.
 // Real batting is unforgiving; these are already generous.
 const DIFFICULTY = {
-  kids:   { window: 0.30, catchProb: 0.22, bowledProb: 0.40, threshold: 170 },
+  kids:   { window: 0.26, catchProb: 0.22, bowledProb: 0.40, threshold: 170 },
   normal: { window: 0.22, catchProb: 0.38, bowledProb: 0.52, threshold: 210 },
   pro:    { window: 0.15, catchProb: 0.55, bowledProb: 0.68, threshold: 250 },
 };

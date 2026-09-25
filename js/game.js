@@ -190,7 +190,27 @@ function renderBatterGrid() {
 bindToggle("set-sound", settings.sound, (v) => { settings.sound = v; audio.setSoundEnabled(v); });
 bindToggle("set-voice", settings.voice, (v) => { settings.voice = v; setVoiceEnabled(v); });
 bindToggle("set-haptics", settings.haptics, (v) => { settings.haptics = v; });
-bindToggle("set-hand", settings.rightHanded, (v) => { settings.rightHanded = v; }, ["RIGHT", "LEFT"]);
+
+function paintHand(rightHanded) {
+  settings.rightHanded = !!rightHanded;
+  ["set-hand", "set-hand-setup"].forEach((id) => {
+    const el = $(id);
+    if (!el) return;
+    el.dataset.on = settings.rightHanded ? "true" : "false";
+    el.textContent = settings.rightHanded ? "RIGHT" : "LEFT";
+  });
+}
+["set-hand", "set-hand-setup"].forEach((id) => {
+  const el = $(id);
+  if (!el) return;
+  el.addEventListener("click", () => {
+    paintHand(!settings.rightHanded);
+    saveSettings();
+    audio.playUiClick();
+  });
+});
+paintHand(settings.rightHanded);
+
 audio.setSoundEnabled(settings.sound);
 setVoiceEnabled(settings.voice);
 
@@ -604,11 +624,17 @@ async function runDelivery(delivery, intent) {
   hint.textContent = match.buttonMode ? "RELEASE AT THE BOUNCE!" : "SWING AFTER THE BOUNCE!";
   audio.playWhoosh();
   setCue("👀");
+  flashArena("flash-release");
+  vibrate(25);
   const tRelease = performance.now();
   const tBounce = tRelease + delivery.toBounce * 1000;
   const tContact = tBounce + delivery.toBat * 1000;
   audio.playBounce(delivery.toBounce); // audio-clock precise
-  setTimeout(() => { setCue("SWING!", true); vibrate(30); }, delivery.toBounce * 1000);
+  setTimeout(() => {
+    setCue("SWING!", true);
+    flashArena("flash-bounce");
+    vibrate(55);
+  }, delivery.toBounce * 1000);
   startTimingRing(tRelease, tBounce, tContact);
 
   // capture EVERYTHING: full backlift through full follow-through,
