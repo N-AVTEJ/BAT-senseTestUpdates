@@ -879,10 +879,11 @@ function bannerSub(result, swing, delivery) {
 
 function flashArena(cls) {
   const a = document.querySelector(".arena");
-  a.classList.remove("flash-six", "flash-four");
+  if (!a) return;
+  a.classList.remove("flash-six", "flash-four", "flash-release", "flash-bounce");
   void a.offsetWidth;
   a.classList.add(cls);
-  setTimeout(() => a.classList.remove(cls), 750);
+  setTimeout(() => a.classList.remove(cls), cls === "flash-release" || cls === "flash-bounce" ? 400 : 750);
 }
 
 function fillResultGrid(delivery, swing, result, diff, intent, flags) {
